@@ -1,0 +1,28 @@
+{
+  "name": "com.xavierarpa.inscript",
+  "displayName": "InScript",
+  "version": "1.0.0",
+  "author": "Xavier Arpa",
+  "unity": "2021.3",
+  "documentation": "README.md",
+  "description": "Lightweight scripting system for Unity with custom syntax, syntax highlighting, and attribute-based context binding.",
+  "keywords": [
+    "scripting",
+    "dsl",
+    "visual-scripting",
+    "rpg",
+    "game-logic"
+  ],
+  "dependencies": {},
+  "samples": [],
+  "license": "MIT",
+  "category": "Tools",
+  "repository": {
+    "url": "https://github.com/xavierarpa/InScript.git",
+    "type": "git"
+  },
+  "bugs": {
+    "url": "https://github.com/xavierarpa/InScript/issues"
+  },
+  "homepage": "https://github.com/xavierarpa/InScript#readme"
+}

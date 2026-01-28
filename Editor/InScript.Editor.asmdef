@@ -1,0 +1,18 @@
+{
+    "name": "InScript.Editor",
+    "rootNamespace": "InScript",
+    "references": [
+        "GUID:8fa691095d7333c4cb062c13a0c7d533"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
