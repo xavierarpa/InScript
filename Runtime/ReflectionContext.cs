@@ -30,7 +30,7 @@ namespace InScript
     /// IScriptContext implementation that uses reflection to read attributes.
     /// Automatically wraps any object with [ScriptValue], [ScriptMethod], [ScriptSelector] attributes.
     /// </summary>
-    internal sealed class ReflectionContext : IScriptContext
+    public sealed class ReflectionContext : IScriptContext
     {
         private readonly object target;
         private readonly Dictionary<string, MemberInfo> values;
