@@ -97,23 +97,23 @@ namespace InScript
             // Header: Label on left, buttons on right
             EditorGUI.LabelField(currentRect, label, EditorStyles.boldLabel);
             
+            // Syntax button
+            Rect syntaxButtonRect = currentRect;
+            syntaxButtonRect.x = currentRect.xMax - 28;
+            syntaxButtonRect.width = 28;
+            if (GUI.Button(syntaxButtonRect, "❔", EditorStyles.miniButton))
+            {
+                SyntaxReferenceWindow.ShowWindow();
+            }
+            
             // Debug button
             Rect debugButtonRect = currentRect;
-            debugButtonRect.x = currentRect.xMax - 195;
-            debugButtonRect.width = 70;
-            if (GUI.Button(debugButtonRect, "🐛 Debug", EditorStyles.miniButton))
+            debugButtonRect.x = currentRect.xMax - 58;
+            debugButtonRect.width = 28;
+            if (GUI.Button(debugButtonRect, "🔧", EditorStyles.miniButton))
             {
                 var target = property.serializedObject.targetObject;
                 ScriptDebugWindow.ShowWindow(codeProp.stringValue, target, property.displayName);
-            }
-            
-            // Syntax button
-            Rect syntaxButtonRect = currentRect;
-            syntaxButtonRect.x = currentRect.xMax - 120;
-            syntaxButtonRect.width = 120;
-            if (GUI.Button(syntaxButtonRect, "📖 Syntax", EditorStyles.miniButton))
-            {
-                SyntaxReferenceWindow.ShowWindow();
             }
             
             currentRect.y += EditorGUIUtility.singleLineHeight + 4;

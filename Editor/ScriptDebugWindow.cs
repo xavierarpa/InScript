@@ -89,8 +89,10 @@ namespace InScript
             window._targetContext = context;
             window._sourceObjectName = context != null ? context.name : "";
             window._sourceFieldName = fieldName;
+            window._variableValues.Clear();
             window.ParseScript(code);
             window.Show();
+            window.Repaint();
         }
         
         private void InitStyles()
@@ -203,13 +205,58 @@ namespace InScript
             
             if (GUILayout.Button("↻", EditorStyles.toolbarButton, GUILayout.Width(25)))
             {
-                if (!string.IsNullOrEmpty(_currentCode))
-                {
-                    ParseScript(_currentCode);
-                }
+                TryReloadFromContext();
             }
             
             EditorGUILayout.EndHorizontal();
+        }
+        
+        private void TryReloadFromContext()
+        {
+            if (_targetContext == null)
+            {
+                return;
+            }
+            
+            // Try to find Script field on context
+            if (_targetContext is MonoBehaviour mono)
+            {
+                var serializedObject = new SerializedObject(mono);
+                var iterator = serializedObject.GetIterator();
+                
+                while (iterator.NextVisible(true))
+                {
+                    // Match by field name if we have one
+                    if (!string.IsNullOrEmpty(_sourceFieldName) && iterator.displayName == _sourceFieldName)
+                    {
+                        var codeProp = iterator.FindPropertyRelative("code");
+                        if (codeProp != null)
+                        {
+                            _currentCode = codeProp.stringValue;
+                            ParseScript(_currentCode);
+                            return;
+                        }
+                    }
+                    // Otherwise find first Script type
+                    else if (string.IsNullOrEmpty(_sourceFieldName) && iterator.type == "Script")
+                    {
+                        var codeProp = iterator.FindPropertyRelative("code");
+                        if (codeProp != null)
+                        {
+                            _currentCode = codeProp.stringValue;
+                            _sourceFieldName = iterator.displayName;
+                            ParseScript(_currentCode);
+                            return;
+                        }
+                    }
+                }
+            }
+            else if (_targetContext is ScriptAsset asset)
+            {
+                _currentCode = asset.Code;
+                _sourceFieldName = "ScriptAsset";
+                ParseScript(_currentCode);
+            }
         }
         
         private void DrawBlocksSection()
@@ -262,11 +309,11 @@ namespace InScript
             // Local variables
             if (_localVariables.Count > 0)
             {
-                GUILayout.Label("<b>Local Variables</b> <color=#666>(script scope)</color>", _sectionStyle);
+                GUILayout.Label("<b>Local Variables</b> <color=#666>(used when executing)</color>", _sectionStyle);
                 
                 foreach (var varName in _localVariables)
                 {
-                    DrawVariableField(varName, "$", VarColor);
+                    DrawLocalVariableField(varName);
                 }
                 
                 GUILayout.Space(5);
@@ -275,22 +322,41 @@ namespace InScript
             // Context variables
             if (_contextVariables.Count > 0)
             {
-                GUILayout.Label("<b>Context Variables</b> <color=#666>(from code)</color>", _sectionStyle);
+                GUILayout.Label("<b>Context Variables</b> <color=#666>(from C# object)</color>", _sectionStyle);
                 
                 foreach (var varName in _contextVariables)
                 {
-                    DrawVariableField(varName, "", new Color(0.85f, 0.85f, 0.85f));
+                    DrawContextVariableField(varName);
                 }
             }
             
             EditorGUILayout.EndVertical();
         }
         
-        private void DrawVariableField(string varName, string prefix, Color color)
+        private void DrawLocalVariableField(string varName)
         {
             EditorGUILayout.BeginHorizontal();
             
-            GUILayout.Label($"<color=#{ColorUtility.ToHtmlStringRGB(color)}>{prefix}{varName}</color>", _sectionStyle, GUILayout.Width(120));
+            GUILayout.Label($"<color=#{ColorUtility.ToHtmlStringRGB(VarColor)}>$</color>{varName}", _sectionStyle, GUILayout.Width(120));
+            
+            string key = $"${varName}";
+            if (!_variableValues.ContainsKey(key))
+            {
+                _variableValues[key] = 0f;
+            }
+            
+            _variableValues[key] = EditorGUILayout.FloatField(_variableValues[key], GUILayout.Width(80));
+            
+            GUILayout.Label("(initial value)", EditorStyles.miniLabel);
+            
+            EditorGUILayout.EndHorizontal();
+        }
+        
+        private void DrawContextVariableField(string varName)
+        {
+            EditorGUILayout.BeginHorizontal();
+            
+            GUILayout.Label($"<color=#{ColorUtility.ToHtmlStringRGB(new Color(0.85f, 0.85f, 0.85f))}>{varName}</color>", _sectionStyle, GUILayout.Width(120));
             
             if (!_variableValues.ContainsKey(varName))
             {
@@ -434,8 +500,20 @@ namespace InScript
             
             try
             {
+                // Build initial locals from the debug panel values
+                var initialLocals = new Dictionary<string, float>();
+                foreach (var varName in _localVariables)
+                {
+                    string key = $"${varName}";
+                    if (_variableValues.TryGetValue(key, out float value))
+                    {
+                        initialLocals[varName] = value;
+                    }
+                }
+                
                 var script = new Script(_currentCode);
-                script.ExecuteBlock(blockName, _targetContext);
+                var context = ReflectionContext.From(_targetContext);
+                script.ExecuteBlock(blockName, context, initialLocals);
                 Debug.Log($"[InScript] ✓ Executed @{blockName} on {_targetContext.name}");
             }
             catch (Exception e)

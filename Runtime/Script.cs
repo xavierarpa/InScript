@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace InScript
@@ -112,12 +113,20 @@ namespace InScript
         /// </summary>
         public void ExecuteBlock(string blockName, IScriptContext context)
         {
+            ExecuteBlock(blockName, context, null);
+        }
+        
+        /// <summary>
+        /// Executes a specific block with pre-initialized local variables.
+        /// </summary>
+        public void ExecuteBlock(string blockName, IScriptContext context, Dictionary<string, float> initialLocals)
+        {
             if (!IsValid)
             {
                 return;
             }
             
-            ScriptRunner.ExecuteBlock(code, blockName, context);
+            ScriptRunner.ExecuteBlock(code, blockName, context, initialLocals);
         }
         
         /// <summary>

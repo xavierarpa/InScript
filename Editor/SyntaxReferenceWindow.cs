@@ -38,6 +38,7 @@ namespace InScript
         private static readonly Color ColorOperator = new(0.9f, 0.9f, 0.5f);
         private static readonly Color ColorIdentifier = new(0.85f, 0.85f, 0.85f);
         private static readonly Color ColorNumber = new(0.7f, 0.9f, 0.7f);
+        private static readonly Color ColorString = new(0.9f, 0.6f, 0.5f);
         
         // UI colors
         private static readonly Color HeaderBgColor = new(0.15f, 0.15f, 0.18f);
@@ -462,6 +463,11 @@ namespace InScript
                 $"{C(ColorMethod, "random")}()",
                 "Random float in range [0, 1]",
                 "random() → 0.42"
+            );
+            DrawItem(
+                $"{C(ColorMethod, "Log")}({C(ColorString, "\"message\"")})",
+                "Print message to Unity Console",
+                "Log(\"Hello!\") → [InScript] Hello!"
             );
             
             EndSection();

@@ -95,6 +95,14 @@ namespace InScript
         /// </summary>
         public static void ExecuteBlock(string script, string blockName, IScriptContext context)
         {
+            ExecuteBlock(script, blockName, context, null);
+        }
+        
+        /// <summary>
+        /// Executes a specific block with pre-initialized local variables.
+        /// </summary>
+        public static void ExecuteBlock(string script, string blockName, IScriptContext context, Dictionary<string, float> initialLocals)
+        {
             if (string.IsNullOrWhiteSpace(script) || context == null)
             {
                 return;
@@ -107,7 +115,9 @@ namespace InScript
             }
             
             var lines = blockContent.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-            var localVariables = new Dictionary<string, float>();
+            var localVariables = initialLocals != null 
+                ? new Dictionary<string, float>(initialLocals) 
+                : new Dictionary<string, float>();
             
             ExecuteLines(script, lines, 0, lines.Length, context, localVariables);
         }
@@ -746,9 +756,18 @@ namespace InScript
             string methodName = match.Groups[1].Value;
             string argsStr = match.Groups[2].Value;
             
+            // Built-in functions
+            if (methodName.Equals("Log", StringComparison.OrdinalIgnoreCase))
+            {
+                var args = ParseMethodArgs(argsStr, context, locals);
+                string message = args.Length > 0 ? args[0]?.ToString() ?? "" : "";
+                Debug.Log($"[InScript] {message}");
+                return;
+            }
+            
             // First try to call method on context
-            var args = ParseMethodArgs(argsStr, context, locals);
-            var result = context.Invoke(methodName, args);
+            var methodArgs = ParseMethodArgs(argsStr, context, locals);
+            var result = context.Invoke(methodName, methodArgs);
             
             // If method doesn't exist, try to execute as block
             if (result is MethodNotFound)
@@ -761,7 +780,7 @@ namespace InScript
                 }
                 else
                 {
-                    Debug.LogWarning($"[ScriptLab] '{methodName}' is not a method or block.");
+                    Debug.LogWarning($"[InScript] '{methodName}' is not a method or block.");
                 }
             }
         }
