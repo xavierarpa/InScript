@@ -48,19 +48,19 @@ using InScript;
 
 public class Character : MonoBehaviour
 {
-    [SerializeField, ScriptValue] private float hp = 100;
-    [SerializeField, ScriptValue] private float maxHp = 100;
-    [SerializeField, ScriptValue] private float attack = 10;
+    [SerializeField, InScript] private float hp = 100;
+    [SerializeField, InScript] private float maxHp = 100;
+    [SerializeField, InScript] private float attack = 10;
     
-    [SerializeField, ScriptSelector("Target")] private Character target;
+    [SerializeField, InScript("Target")] private Character target;
     
-    [ScriptMethod]
+    [InScript]
     private void Heal(float amount)
     {
         hp = Mathf.Min(hp + amount, maxHp);
     }
     
-    [ScriptMethod]
+    [InScript]
     private void Log(string message, float value)
     {
         Debug.Log($"{message}: {value}");
@@ -173,12 +173,11 @@ InScript/
 │   ├── IScriptContext.cs      # Context interface
 │   ├── ReflectionContext.cs   # Attribute-based context
 │   └── Attributes/
-│       ├── ScriptValueAttribute.cs
-│       ├── ScriptMethodAttribute.cs
-│       └── ScriptSelectorAttribute.cs
+│       └── InScriptAttribute.cs # Unified attribute for values/selectors/methods
 └── Editor/
     ├── ScriptDrawer.cs           # PropertyDrawer with syntax highlighting
     ├── ScriptAssetEditor.cs      # Custom editor for ScriptAsset
+    ├── ScriptDebugWindow.cs      # Debug panel for testing scripts
     └── SyntaxReferenceWindow.cs  # Dockable syntax documentation
 ```
 

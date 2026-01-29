@@ -178,7 +178,7 @@ namespace InScript
         {
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
             GUILayout.FlexibleSpace();
-            GUILayout.Label("InScript v1.0.0", EditorStyles.miniLabel);
+            GUILayout.Label("InScript v1.1.0", EditorStyles.miniLabel);
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
         }

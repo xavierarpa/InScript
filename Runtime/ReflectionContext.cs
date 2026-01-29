@@ -28,13 +28,12 @@ namespace InScript
 {
     /// <summary>
     /// IScriptContext implementation that uses reflection to read attributes.
-    /// Automatically wraps any object with [ScriptValue], [ScriptMethod], [ScriptSelector] attributes.
+    /// Automatically wraps any object with [InScript] attribute.
     /// </summary>
     public sealed class ReflectionContext : IScriptContext
     {
         private readonly object target;
         private readonly Dictionary<string, MemberInfo> values;
-        private readonly Dictionary<string, bool> readOnlyValues;
         private readonly Dictionary<string, MethodInfo> methods;
         private readonly Dictionary<string, MemberInfo> selectors;
         
@@ -44,7 +43,6 @@ namespace InScript
         {
             this.target = target;
             this.values = cache.Values;
-            this.readOnlyValues = cache.ReadOnlyValues;
             this.methods = cache.Methods;
             this.selectors = cache.Selectors;
         }
@@ -83,53 +81,64 @@ namespace InScript
             // Scan fields
             foreach (var field in type.GetFields(flags))
             {
-                var valueAttr = field.GetCustomAttribute<ScriptValueAttribute>();
-                if (valueAttr != null)
+                var attr = field.GetCustomAttribute<InScriptAttribute>();
+                if (attr != null)
                 {
-                    var name = valueAttr.Name ?? field.Name;
-                    cache.Values[name] = field;
-                    cache.ReadOnlyValues[name] = valueAttr.ReadOnly;
-                }
-
-                var selectorAttr = field.GetCustomAttribute<ScriptSelectorAttribute>();
-                if (selectorAttr != null)
-                {
-                    var name = selectorAttr.Name ?? field.Name;
-                    cache.Selectors[name] = field;
+                    var name = attr.Name ?? field.Name;
+                    
+                    // Auto-detect: primitive types are values, objects are selectors
+                    if (IsValueType(field.FieldType))
+                    {
+                        cache.Values[name] = field;
+                    }
+                    else
+                    {
+                        cache.Selectors[name] = field;
+                    }
                 }
             }
 
             // Scan properties
             foreach (var prop in type.GetProperties(flags))
             {
-                var valueAttr = prop.GetCustomAttribute<ScriptValueAttribute>();
-                if (valueAttr != null)
+                var attr = prop.GetCustomAttribute<InScriptAttribute>();
+                if (attr != null)
                 {
-                    var name = valueAttr.Name ?? prop.Name;
-                    cache.Values[name] = prop;
-                    cache.ReadOnlyValues[name] = valueAttr.ReadOnly || !prop.CanWrite;
-                }
-
-                var selectorAttr = prop.GetCustomAttribute<ScriptSelectorAttribute>();
-                if (selectorAttr != null)
-                {
-                    var name = selectorAttr.Name ?? prop.Name;
-                    cache.Selectors[name] = prop;
+                    var name = attr.Name ?? prop.Name;
+                    
+                    // Auto-detect: primitive types are values, objects are selectors
+                    if (IsValueType(prop.PropertyType))
+                    {
+                        cache.Values[name] = prop;
+                    }
+                    else
+                    {
+                        cache.Selectors[name] = prop;
+                    }
                 }
             }
 
             // Scan methods
             foreach (var method in type.GetMethods(flags))
             {
-                var methodAttr = method.GetCustomAttribute<ScriptMethodAttribute>();
-                if (methodAttr != null)
+                var attr = method.GetCustomAttribute<InScriptAttribute>();
+                if (attr != null)
                 {
-                    var name = methodAttr.Name ?? method.Name;
+                    var name = attr.Name ?? method.Name;
                     cache.Methods[name] = method;
                 }
             }
 
             return cache;
+        }
+        
+        private static bool IsValueType(Type type)
+        {
+            // Types that can be used as script values (numeric types)
+            return type == typeof(float) || type == typeof(int) || type == typeof(double) ||
+                   type == typeof(bool) || type == typeof(byte) || type == typeof(short) ||
+                   type == typeof(long) || type == typeof(uint) || type == typeof(ushort) ||
+                   type == typeof(ulong) || type == typeof(decimal) || type == typeof(sbyte);
         }
 
         bool IScriptContext.TryGetValue(string name, out float value)
@@ -141,7 +150,7 @@ namespace InScript
                 return true;
             }
 
-            Debug.LogWarning($"[InScript] Value '{name}' not found on {target.GetType().Name}. Add [ScriptValue] attribute to expose it.");
+            Debug.LogWarning($"[InScript] Value '{name}' not found on {target.GetType().Name}. Add [InScript] attribute to expose it.");
             value = 0f;
             return false;
         }
@@ -149,11 +158,6 @@ namespace InScript
         bool IScriptContext.TrySetValue(string name, float value)
         {
             if (!values.TryGetValue(name, out var member))
-            {
-                return false;
-            }
-
-            if (readOnlyValues.TryGetValue(name, out var isReadOnly) && isReadOnly)
             {
                 return false;
             }
@@ -295,7 +299,6 @@ namespace InScript
         private sealed class ReflectionCache
         {
             public readonly Dictionary<string, MemberInfo> Values = new();
-            public readonly Dictionary<string, bool> ReadOnlyValues = new();
             public readonly Dictionary<string, MethodInfo> Methods = new();
             public readonly Dictionary<string, MemberInfo> Selectors = new();
         }

@@ -50,12 +50,7 @@ namespace InScript
         /// <summary>
         /// Executes a specific block with the given context object.
         /// </summary>
-        public void ExecuteBlock(string blockName, object target) => script.ExecuteBlock(blockName, target);
-        
-        /// <summary>
-        /// Evaluates the script as an expression with the given context object.
-        /// </summary>
-        public float EvaluateAsFormula(object target) => script.EvaluateAsFormula(target);
+        public void Execute(string blockName, object target) => script.Execute(blockName, target);
         
         /// <summary>
         /// Executes the entire script with the given context.
@@ -65,11 +60,6 @@ namespace InScript
         /// <summary>
         /// Executes a specific block of the script.
         /// </summary>
-        public void ExecuteBlock(string blockName, IScriptContext context) => script.ExecuteBlock(blockName, context);
-        
-        /// <summary>
-        /// Evaluates the script as an expression and returns the result.
-        /// </summary>
-        public float EvaluateAsFormula(IScriptContext context) => script.EvaluateAsFormula(context);
+        public void Execute(string blockName, IScriptContext context) => script.Execute(blockName, context);
     }
 }

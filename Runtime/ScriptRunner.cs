@@ -56,6 +56,7 @@ namespace InScript
         
         // Context assignment: identifier = expr
         private static readonly Regex ContextAssignPattern = new(@"^\s*(\w+)\s*=\s*(.+)$", RegexOptions.Compiled);
+        private static readonly Regex ContextCompoundPattern = new(@"^\s*(\w+)\s*(\+=|-=|\*=|/=)\s*(.+)$", RegexOptions.Compiled);
         
         // Selector with property/method: #Selector.Property or #Selector.Method()
         private static readonly Regex SelectorAccessPattern = new(@"^\s*#(\w+)\.(\w+)(?:\(([^)]*)\))?\s*$", RegexOptions.Compiled);
@@ -337,6 +338,15 @@ namespace InScript
                     continue;
                 }
                 
+                // Context compound assignment: identifier += expr
+                var contextCompoundMatch = ContextCompoundPattern.Match(line);
+                if (contextCompoundMatch.Success)
+                {
+                    ExecuteContextCompoundAssign(contextCompoundMatch, context, locals);
+                    i++;
+                    continue;
+                }
+                
                 // Context assignment: identifier = expr
                 var contextMatch = ContextAssignPattern.Match(line);
                 if (contextMatch.Success)
@@ -349,7 +359,7 @@ namespace InScript
                 }
                 
                 // Unrecognized line
-                Debug.LogWarning($"[ScriptLab] Unrecognized line: {line}");
+                Debug.LogWarning($"[InScript] Unrecognized line: {line}");
                 i++;
             }
         }
@@ -364,7 +374,7 @@ namespace InScript
             
             if (branches.endIndex == -1)
             {
-                Debug.LogWarning($"[ScriptLab] Missing ';' for '?' at line {ifIndex + 1}");
+                Debug.LogWarning($"[InScript] Missing ';' for '?' at line {ifIndex + 1}");
                 return ifIndex + 1;
             }
             
@@ -730,6 +740,27 @@ namespace InScript
             };
         }
         
+        private static void ExecuteContextCompoundAssign(Match match, IScriptContext context, Dictionary<string, float> locals)
+        {
+            string varName = match.Groups[1].Value;
+            string op = match.Groups[2].Value;
+            float exprValue = EvaluateExpr(match.Groups[3].Value, context, locals);
+            
+            // Get current value from context
+            context.TryGetValue(varName, out float currentValue);
+            
+            float newValue = op switch
+            {
+                "+=" => currentValue + exprValue,
+                "-=" => currentValue - exprValue,
+                "*=" => currentValue * exprValue,
+                "/=" => exprValue != 0 ? currentValue / exprValue : currentValue,
+                _ => currentValue
+            };
+            
+            context.TrySetValue(varName, newValue);
+        }
+        
         private static void ExecuteSelectorAccess(Match match, IScriptContext context, Dictionary<string, float> locals)
         {
             string selectorName = match.Groups[1].Value;
@@ -739,7 +770,7 @@ namespace InScript
             var selector = context.GetSelector(selectorName);
             if (selector == null)
             {
-                Debug.LogWarning($"[ScriptLab] Selector not found: {selectorName}");
+                Debug.LogWarning($"[InScript] Selector not found: {selectorName}");
                 return;
             }
             

@@ -248,6 +248,9 @@ namespace InScript
                 return "";
             }
             
+            // Normalize tabs to spaces for consistent rendering
+            script = script.Replace("\t", "          ");
+            
             var lines = script.Split('\n');
             var result = new System.Text.StringBuilder();
             

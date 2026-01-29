@@ -70,7 +70,7 @@ namespace InScript
         
         /// <summary>
         /// Executes the entire script with the given context object.
-        /// Uses reflection to read [ScriptValue], [ScriptMethod], [ScriptSelector] attributes.
+        /// Uses reflection to read [InScript] attributes.
         /// </summary>
         public void Execute(object target)
         {
@@ -79,20 +79,11 @@ namespace InScript
         
         /// <summary>
         /// Executes a specific block with the given context object.
-        /// Uses reflection to read [ScriptValue], [ScriptMethod], [ScriptSelector] attributes.
+        /// Uses reflection to read [InScript] attributes.
         /// </summary>
-        public void ExecuteBlock(string blockName, object target)
+        public void Execute(string blockName, object target)
         {
             ExecuteBlock(blockName, ReflectionContext.From(target));
-        }
-        
-        /// <summary>
-        /// Evaluates the script as an expression with the given context object.
-        /// Uses reflection to read [ScriptValue], [ScriptMethod], [ScriptSelector] attributes.
-        /// </summary>
-        public float EvaluateAsFormula(object target)
-        {
-            return EvaluateAsFormula(ReflectionContext.From(target));
         }
         
         /// <summary>
@@ -127,20 +118,6 @@ namespace InScript
             }
             
             ScriptRunner.ExecuteBlock(code, blockName, context, initialLocals);
-        }
-        
-        /// <summary>
-        /// Evaluates the script as an expression and returns the result.
-        /// Useful for formulas.
-        /// </summary>
-        public float EvaluateAsFormula(IScriptContext context)
-        {
-            if (!IsValid)
-            {
-                return 0f;
-            }
-            
-            return ScriptRunner.EvaluateExpression(code.Trim(), context);
         }
     }
 }
